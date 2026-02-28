@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>دستیار هوشمند خطبه‌های نماز جمعه شماره دو</title>
+    <title>دستیار هوشمند خطبه‌های نماز جمعه</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap" rel="stylesheet">
     
@@ -114,6 +114,20 @@
             #particle-canvas { display: none !important; }
             #ai-core { display: none !important; }
             .glass-panel::before { display: none !important; }
+        }
+
+        /* استایل‌های مربوط به دیو رندر PDF در خارج از صفحه */
+        #pdfPrintArea {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 800px; /* عرض ثابت برای جلوگیری از به هم ریختگی */
+            background-color: white;
+            color: black;
+            padding: 40px;
+            box-sizing: border-box;
+            z-index: -9999;
+            direction: rtl;
         }
     </style>
 </head>
@@ -236,6 +250,9 @@
             </div>
         </main>
     </div>
+
+    <!-- این دیو برای ساخت PDF استفاده می‌شود و کاملا از صفحه مانیتور خارج است تا سفیدی ایجاد نکند -->
+    <div id="pdfPrintArea"></div>
 
     <textarea id="copyHelper" class="hidden absolute -left-full -top-full"></textarea>
 
@@ -506,6 +523,9 @@
         }
 
         function getReportHTML() {
+            // نکته مهم رفع باگ Word و PDF: 
+            // خاصیت text-align: justify به طور کامل حذف و به right تغییر یافت تا فاصله عجیبی بین کلمات نیفتد.
+            // همچنین دستور page-break اضافه شد تا در صورت طولانی شدن PDF، متون از وسط نصف نشوند.
             let html = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head>
@@ -513,13 +533,13 @@
                 <title>گزارش خطبه</title>
                 <style>
                     body { font-family: 'B Nazanin', Tahoma, Arial, sans-serif; font-size: 14pt; direction: rtl; text-align: right; background: white; color: black; padding: 20px;}
-                    p { margin: 0 0 10pt 0; line-height: 1.8; }
+                    p { margin: 0 0 10pt 0; line-height: 1.8; text-align: right; direction: rtl; }
                     .bismillah { text-align: center; margin-bottom: 15pt; font-size: 14pt; font-weight: bold;}
                     .main-title { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 20pt; color: #0056b3;}
-                    .intro { text-align: justify; margin-bottom: 20pt; border-bottom: 1px solid #ccc; padding-bottom: 10px;}
-                    .section-title { font-weight: bold; margin-top: 20pt; font-size: 15pt; color: #28a745; background: #f8f9fa; padding: 5px; border-right: 4px solid #28a745;}
-                    .list-item { margin-bottom: 10pt; text-align: justify; padding-right: 15px;}
-                    .overall { background: #fff3cd; padding: 10px; border-right: 4px solid #ffc107; margin-top: 20px; }
+                    .intro { text-align: right; margin-bottom: 20pt; border-bottom: 1px solid #ccc; padding-bottom: 10px;}
+                    .section-title { font-weight: bold; margin-top: 20pt; font-size: 15pt; color: #28a745; background: #f8f9fa; padding: 5px; border-right: 4px solid #28a745; page-break-after: avoid;}
+                    .list-item { margin-bottom: 10pt; text-align: right; padding-right: 15px; page-break-inside: avoid; direction: rtl;}
+                    .overall { background: #fff3cd; padding: 10px; border-right: 4px solid #ffc107; margin-top: 20px; text-align: right; page-break-inside: avoid;}
                 </style>
             </head>
             <body>
@@ -530,19 +550,19 @@
             `;
 
             currentReportData.khutbah1.summary.forEach((item, index) => {
-                html += `<p class="list-item">${index + 1}. <b>${item.heading}</b><br>${item.explanation}</p>`;
+                html += `<div class="list-item"><p><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</p></div>`;
             });
 
             html += `<p class="section-title">🔹 خطبه دوم: ${currentReportData.khutbah2.title}</p>`;
 
             currentReportData.khutbah2.summary.forEach((item, index) => {
-                html += `<p class="list-item">${index + 1}. <b>${item.heading}</b><br>${item.explanation}</p>`;
+                html += `<div class="list-item"><p><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</p></div>`;
             });
 
             html += `
                 <div class="overall">
-                    <p style="font-weight: bold; color: #856404; font-size: 14pt;">📌 ${currentReportData.overallSummary.title}</p>
-                    <p style="text-align: justify;">${currentReportData.overallSummary.text}</p>
+                    <p style="font-weight: bold; color: #856404; font-size: 14pt; text-align:right;">📌 ${currentReportData.overallSummary.title}</p>
+                    <p style="text-align: right;">${currentReportData.overallSummary.text}</p>
                 </div>
             </body>
             </html>`;
@@ -566,37 +586,30 @@
                 URL.revokeObjectURL(url);
             } 
             else if (type === 'pdf') {
-                // حل مشکل چشمک زدن صفحه و خالی بودن PDF:
-                // ساخت یک المان مجازی در حافظه بدون نمایش در رابط کاربری
-                const container = document.createElement('div');
-                container.innerHTML = rawHTML;
-                container.style.width = '800px'; 
-                container.style.padding = '30px';
-                container.style.backgroundColor = '#ffffff';
-                container.style.color = '#000000';
-                container.style.direction = 'rtl';
-                container.style.fontFamily = 'Tahoma, Arial, sans-serif'; // فونت‌های امن برای canvas
+                // ریختن محتوا در دیو مخفی (دیو در موقعیت -9999px است پس صفحه سفید نمیشود)
+                const pdfArea = document.getElementById('pdfPrintArea');
+                pdfArea.innerHTML = rawHTML;
 
                 const opt = {
-                    margin:       10,
+                    margin:[10, 10, 10, 10], // حاشیه‌ها برای جلوگیری از برش متن
                     filename:     'گزارش_خطبه.pdf',
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true, logging: false },
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    image:        { type: 'jpeg', quality: 1 },
+                    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, windowWidth: 800 },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // جلوگیری از نصف شدن پاراگراف‌ها در دو صفحه
                 };
 
                 const pdfBtnText = document.getElementById('pdfBtnText');
                 const originalText = pdfBtnText.innerText;
                 pdfBtnText.innerText = 'در حال ساخت...';
 
-                // پاس دادن کانتینر مجازی به html2pdf
-                html2pdf().set(opt).from(container).save().then(() => {
+                html2pdf().set(opt).from(pdfArea).save().then(() => {
                     pdfBtnText.innerText = originalText;
+                    pdfArea.innerHTML = ''; // پاک کردن محتوا پس از اتمام
                 });
             }
         }
         
-        // تابع شکستن متن طولانی در Canvas سازگار با محیط راست‌چین (RTL)
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(' ');
             let line = '';
@@ -677,16 +690,12 @@
             
             ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
             
-            // تنظیمات مشترک رسم متن به همراه پشتیبانی از راست چین برای علائم نگارشی
             ctx.direction = "rtl"; 
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
             const centerX = cvs.width / 2;
             const scale = 3.5; 
-
-            // تمام Y ها اصلاح شدند تا پایین تر بیایند و داخل کادر آبی قرار بگیرند
             
-            // خط 1: تاریخ و مکان (فونت b nazanin، سایز 10، پایین تر آورده شد)
             ctx.font = `bold ${10 * scale}px BNazanin, sans-serif`;
             ctx.fillStyle = "white";
             ctx.lineWidth = 4;
@@ -695,7 +704,6 @@
             ctx.strokeText(dateStr, centerX, cvs.height * 0.59); 
             ctx.fillText(dateStr, centerX, cvs.height * 0.59);
 
-            // خط 2 و 3: نام امام جمعه (فونت b nazanin، سایز به 14 تغییر کرد، موقعیت تنظیم شد)
             ctx.font = `bold ${14 * scale}px BNazanin, sans-serif`;
             const nameLine1 = "امام جمعه محترم دهستان میانکاله(زاغمرز)";
             const nameLine2 = "حجت الاسلام والمسلمین حاج حسین انزائی:";
@@ -705,7 +713,6 @@
             ctx.strokeText(nameLine2, centerX, cvs.height * 0.675);
             ctx.fillText(nameLine2, centerX, cvs.height * 0.675);
 
-            // خط 4: متن خطبه (فونت B titr، سایز به 16 تغییر کرد، رنگ زرد، موقعیت تنظیم شد)
             ctx.font = `bold ${16 * scale}px BTitr, sans-serif`;
             ctx.fillStyle = "#FFD700"; 
             ctx.lineWidth = 5;
@@ -713,7 +720,7 @@
             const finalQuote = toPersianDigits(`« ${quoteText} »`);
             
             const maxWidth = cvs.width * 0.85; 
-            const lineHeight = 16 * scale * 1.6; // فاصله خطوط متناسب با سایز 16
+            const lineHeight = 16 * scale * 1.6; 
             
             wrapText(ctx, finalQuote, centerX, cvs.height * 0.73, maxWidth, lineHeight);
 
