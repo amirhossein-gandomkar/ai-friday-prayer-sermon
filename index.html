@@ -2,9 +2,8 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- جلوگیری از زوم خودکار کیبورد در گوشی که باعث بهم ریختگی قالب می‌شود -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>دستیار هوشمند خطبه‌های نماز جمعه</title>
+    <title>دستیار هوشمند خطبه‌های نماز جمعه شماره دو</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap" rel="stylesheet">
     
@@ -12,7 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        /* اضافه کردن فونت های درخواستی برای خطبه نگاشت */
         @font-face {
             font-family: 'BNazanin';
             src: url('https://cdn.fontcdn.ir/Font/Persian/BNazanin/BNazanin.woff2') format('woff2');
@@ -37,12 +35,8 @@
             color: #e2e8f0;
         }
 
-        /* ----- بوم شبکه عصبی در پس زمینه ----- */
-        #particle-canvas {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none;
-        }
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none; }
 
-        /* ----- هسته هوش مصنوعی ----- */
         #ai-core {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 90vw; max-width: 400px; height: 90vw; max-height: 400px;
@@ -52,7 +46,6 @@
         }
         @keyframes float { 0% { top: 50%; } 50% { top: 48%; } 100% { top: 50%; } }
 
-        /* ----- شیشه تاریک ----- */
         .glass-panel {
             background: var(--dark-glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -67,7 +60,6 @@
         }
         .glass-panel > * { position: relative; z-index: 1; }
 
-        /* ----- ورودی های متنی ----- */
         .neon-input {
             background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc; transition: all 0.4s;
         }
@@ -81,7 +73,6 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
 
-        /* ----- دکمه ها و انیمیشن ها ----- */
         .cyber-btn {
             position: relative; background: linear-gradient(135deg, var(--primary), var(--secondary));
             overflow: hidden; z-index: 1; transition: all 0.3s ease;
@@ -119,7 +110,6 @@
         .cursor-blink::after { content: '|'; animation: blink 1s step-end infinite; color: var(--primary); }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* خاموش کردن گرافیک سنگین در موبایل */
         @media (max-width: 768px) {
             #particle-canvas { display: none !important; }
             #ai-core { display: none !important; }
@@ -129,7 +119,6 @@
 </head>
 <body class="antialiased text-gray-200">
 
-    <!-- لود مخفیانه فونت ها تا مرورگر آنها را آماده کند -->
     <div style="font-family: 'BNazanin'; visibility: hidden; position: absolute;">A</div>
     <div style="font-family: 'BTitr'; visibility: hidden; position: absolute;">A</div>
 
@@ -198,7 +187,6 @@
                         گزارش نهایی استخراج شد
                     </h2>
                     
-                    <!-- گروه دکمه‌های بالا -->
                     <div class="flex flex-wrap gap-3 w-full lg:w-auto justify-center">
                         <button id="copyBtn" class="w-full sm:w-auto group flex items-center justify-center bg-gray-800/80 hover:bg-emerald-600 border border-gray-600 hover:border-emerald-500 text-gray-300 hover:text-white font-bold py-3 px-5 rounded-xl transition-all duration-300 shadow-lg">
                             <svg id="copyIcon" class="w-5 h-5 ml-2 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,19 +202,17 @@
                             <span>خروجی Word</span>
                         </button>
 
-                        <!-- دکمه خروجی PDF -->
                         <button id="pdfBtn" class="w-full sm:w-auto group flex items-center justify-center bg-red-900/50 hover:bg-red-600 border border-red-700/50 hover:border-red-500 text-red-200 hover:text-white font-bold py-3 px-5 rounded-xl transition-all duration-300 shadow-lg">
                             <svg class="w-5 h-5 ml-2 transition-transform group-hover:-translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
-                            <span>خروجی PDF</span>
+                            <span id="pdfBtnText">خروجی PDF</span>
                         </button>
                     </div>
                 </div>
                 
                 <div id="output" class="text-base md:text-lg leading-loose text-gray-300 font-medium"></div>
 
-                <!-- بخش ساخت عکس نوشته -->
                 <div class="mt-8 pt-6 border-t border-gray-700/50 text-center">
                     <button id="posterBtn" class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-gradient-to-r from-purple-600 to-indigo-600 border border-transparent rounded-2xl hover:from-purple-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(139,92,246,0.4)]">
                         <svg class="w-6 h-6 ml-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -252,9 +238,6 @@
     </div>
 
     <textarea id="copyHelper" class="hidden absolute -left-full -top-full"></textarea>
-    
-    <!-- دیو مخفی برای رندر HTML به PDF -->
-    <div id="pdfPrintArea" style="display:none;"></div>
 
     <script>
         const isMobileDevice = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -344,7 +327,7 @@
         const errorDiv = document.getElementById('error');
         const errorMessageSpan = document.getElementById('errorMessage');
 
-        let currentReportData = null; // برای ذخیره داده‌ها جهت ساخت ورد/PDF/عکس
+        let currentReportData = null; 
         const introText = "به گزارش معاونت ارتباطات و رسانه دفتر امام جمعه دهستان میانکاله (زاغمرز)، حجت الاسلام والمسلمین حاج حسین انزائی در خطبه‌های این هفته از نماز جمعه، ضمن سفارش به تقوا اظهار کرد:";
 
         function toPersianDigits(str) {
@@ -352,7 +335,6 @@
             return str.toString().replace(/\d/g, x => persianDigits[x]);
         }
         
-        // تابع گرفتن تاریخ امروز شمسی برای خطبه نگاشت
         function getPersianDate() {
             return new Date().toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
         }
@@ -399,7 +381,6 @@
                 loadingText.innerText = loadingMessages[msgIndex];
             }, 1500);
 
-            // اضافه شدن دریافت bestQuote برای عکس نوشته‌ها
             const prompt = `
                 شما یک دستیار متخصص در خلاصه‌سازی و تحلیل محتوای خطبه‌های نماز جمعه هستید.
                 متن خطبه اول: ${khutbah1Text}
@@ -491,7 +472,7 @@
                 </div>
                 <div class="output-card output-khutbah2">
                     <h4 class="text-lg md:text-xl font-bold text-emerald-400 mb-4 flex items-center">
-                        <span class="bg-emerald-500/20 p-2 rounded-lg ml-3"><svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg></span>
+                        <span class="bg-emerald-500/20 p-2 rounded-lg ml-3"><svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg></span>
                         خطبه دوم: ${toPersianDigits(data.khutbah2.title)}
                     </h4>
                     <div class="space-y-4 pr-2">
@@ -524,7 +505,6 @@
             }, 100);
         }
 
-        // تابع ساخت HTML استایل دار برای ورد و PDF
         function getReportHTML() {
             let html = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -569,7 +549,6 @@
             return toPersianDigits(html);
         }
 
-        // تابع یکپارچه برای خروجی ورد و PDF
         function exportToFile(type) {
             if (!currentReportData) return;
             
@@ -587,28 +566,37 @@
                 URL.revokeObjectURL(url);
             } 
             else if (type === 'pdf') {
-                const pdfArea = document.getElementById('pdfPrintArea');
-                pdfArea.innerHTML = rawHTML;
-                pdfArea.style.display = 'block';
+                // حل مشکل چشمک زدن صفحه و خالی بودن PDF:
+                // ساخت یک المان مجازی در حافظه بدون نمایش در رابط کاربری
+                const container = document.createElement('div');
+                container.innerHTML = rawHTML;
+                container.style.width = '800px'; 
+                container.style.padding = '30px';
+                container.style.backgroundColor = '#ffffff';
+                container.style.color = '#000000';
+                container.style.direction = 'rtl';
+                container.style.fontFamily = 'Tahoma, Arial, sans-serif'; // فونت‌های امن برای canvas
 
                 const opt = {
                     margin:       10,
                     filename:     'گزارش_خطبه.pdf',
                     image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true },
+                    html2canvas:  { scale: 2, useCORS: true, logging: false },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
-                html2pdf().set(opt).from(pdfArea).save().then(() => {
-                    pdfArea.style.display = 'none';
-                    pdfArea.innerHTML = '';
+                const pdfBtnText = document.getElementById('pdfBtnText');
+                const originalText = pdfBtnText.innerText;
+                pdfBtnText.innerText = 'در حال ساخت...';
+
+                // پاس دادن کانتینر مجازی به html2pdf
+                html2pdf().set(opt).from(container).save().then(() => {
+                    pdfBtnText.innerText = originalText;
                 });
             }
         }
-
-        // ------------------ توابع مربوط به ساخت عکس نوشته (Canvas) ------------------ //
         
-        // تابع شکستن متن طولانی در Canvas
+        // تابع شکستن متن طولانی در Canvas سازگار با محیط راست‌چین (RTL)
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(' ');
             let line = '';
@@ -643,21 +631,16 @@
             posterLoading.classList.remove('hidden');
 
             try {
-                // منتظر ماندن برای لود کامل فونت ها در مرورگر
                 await document.fonts.ready;
 
-                // بارگذاری تصویر پس زمینه با دسترسی CORS (حل مشکل دانلود)
                 const img = new Image();
                 img.crossOrigin = "anonymous"; 
                 img.src = "https://raw.githubusercontent.com/amirhossein-gandomkar/AISERMONANALYZER/a3bbbbbe683533ce44b9f00bbc618e66eabbc9f9/kh.png";
 
                 img.onload = () => {
-                    // تولید خطبه مذهبی
-                    const dataUrl1 = createSinglePoster(img, `خطبه مذهبی: ${currentReportData.khutbah1.title}`, currentReportData.khutbah1.bestQuote);
-                    // تولید خطبه سیاسی
-                    const dataUrl2 = createSinglePoster(img, `خطبه سیاسی: ${currentReportData.khutbah2.title}`, currentReportData.khutbah2.bestQuote);
+                    const dataUrl1 = createSinglePoster(img, currentReportData.khutbah1.bestQuote);
+                    const dataUrl2 = createSinglePoster(img, currentReportData.khutbah2.bestQuote);
 
-                    // نمایش در UI
                     posterOutputs.innerHTML = `
                         <div class="bg-gray-800/50 p-4 rounded-xl border border-purple-500/30">
                             <h5 class="text-purple-300 font-bold mb-3">خطبه نگاشت (مذهبی)</h5>
@@ -685,59 +668,54 @@
             }
         }
 
-        function createSinglePoster(img, titleTag, quoteText) {
+        function createSinglePoster(img, quoteText) {
             const cvs = document.createElement('canvas');
             const ctx = cvs.getContext('2d');
             
-            // تنظیم ابعاد بر اساس تصویر گیت هاب
             cvs.width = img.width;
             cvs.height = img.height;
             
-            // رسم پس زمینه
             ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
             
-            // تنظیمات مشترک رسم متن
+            // تنظیمات مشترک رسم متن به همراه پشتیبانی از راست چین برای علائم نگارشی
+            ctx.direction = "rtl"; 
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
             const centerX = cvs.width / 2;
-            
-            // برای تبدیل سایزهای گفته شده کاربر به سایز متناسب با عکس باکیفیت بالا
-            // ضریب ضرب را حدود 3.5 در نظر میگیریم
             const scale = 3.5; 
 
-            // خط 1: تاریخ و مکان (فونت b nazanin، سایز 10، بولد، سفید، دور سیاه)
+            // تمام Y ها اصلاح شدند تا پایین تر بیایند و داخل کادر آبی قرار بگیرند
+            
+            // خط 1: تاریخ و مکان (فونت b nazanin، سایز 10، پایین تر آورده شد)
             ctx.font = `bold ${10 * scale}px BNazanin, sans-serif`;
             ctx.fillStyle = "white";
             ctx.lineWidth = 4;
             ctx.strokeStyle = "black";
             const dateStr = toPersianDigits(`نماز جمعه ${getPersianDate()} دهستان میانکاله (زاغمرز)`);
-            ctx.strokeText(dateStr, centerX, cvs.height * 0.55); // تنظیم جایگاه روی کادر آبی
-            ctx.fillText(dateStr, centerX, cvs.height * 0.55);
+            ctx.strokeText(dateStr, centerX, cvs.height * 0.59); 
+            ctx.fillText(dateStr, centerX, cvs.height * 0.59);
 
-            // خط 2 و 3: نام امام جمعه (فونت b nazanin، سایز 15، بولد، سفید، دور سیاه)
-            ctx.font = `bold ${15 * scale}px BNazanin, sans-serif`;
+            // خط 2 و 3: نام امام جمعه (فونت b nazanin، سایز به 14 تغییر کرد، موقعیت تنظیم شد)
+            ctx.font = `bold ${14 * scale}px BNazanin, sans-serif`;
             const nameLine1 = "امام جمعه محترم دهستان میانکاله(زاغمرز)";
             const nameLine2 = "حجت الاسلام والمسلمین حاج حسین انزائی:";
-            ctx.strokeText(nameLine1, centerX, cvs.height * 0.60);
-            ctx.fillText(nameLine1, centerX, cvs.height * 0.60);
+            ctx.strokeText(nameLine1, centerX, cvs.height * 0.635);
+            ctx.fillText(nameLine1, centerX, cvs.height * 0.635);
             
-            ctx.strokeText(nameLine2, centerX, cvs.height * 0.65);
-            ctx.fillText(nameLine2, centerX, cvs.height * 0.65);
+            ctx.strokeText(nameLine2, centerX, cvs.height * 0.675);
+            ctx.fillText(nameLine2, centerX, cvs.height * 0.675);
 
-            // خط 4: متن خطبه (فونت B titr، سایز 15.5، بولد، زرد، دور سیاه)
-            ctx.font = `bold ${15.5 * scale}px BTitr, sans-serif`;
-            ctx.fillStyle = "#FFD700"; // رنگ زرد
+            // خط 4: متن خطبه (فونت B titr، سایز به 16 تغییر کرد، رنگ زرد، موقعیت تنظیم شد)
+            ctx.font = `bold ${16 * scale}px BTitr, sans-serif`;
+            ctx.fillStyle = "#FFD700"; 
             ctx.lineWidth = 5;
             
-            // اضافه کردن گیومه به اول و آخر متن انتخابی
             const finalQuote = toPersianDigits(`« ${quoteText} »`);
             
-            // عرض مجاز کادر آبی برای متن (حدود 80 درصد عرض عکس)
-            const maxWidth = cvs.width * 0.8; 
-            const lineHeight = 15.5 * scale * 1.5; // فاصله خطوط
+            const maxWidth = cvs.width * 0.85; 
+            const lineHeight = 16 * scale * 1.6; // فاصله خطوط متناسب با سایز 16
             
-            // رسم متن شکسته شده در خطوط
-            wrapText(ctx, finalQuote, centerX, cvs.height * 0.72, maxWidth, lineHeight);
+            wrapText(ctx, finalQuote, centerX, cvs.height * 0.73, maxWidth, lineHeight);
 
             return cvs.toDataURL("image/png");
         }
