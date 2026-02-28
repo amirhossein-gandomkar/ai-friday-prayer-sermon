@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>دستیار هوشمند خطبه‌های نماز جمعه</title>
+    <title>دستیار هوشمند خطبه‌های نماز جمعه شماره سه</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap" rel="stylesheet">
     
@@ -114,20 +114,6 @@
             #particle-canvas { display: none !important; }
             #ai-core { display: none !important; }
             .glass-panel::before { display: none !important; }
-        }
-
-        /* استایل‌های مربوط به دیو رندر PDF در خارج از صفحه */
-        #pdfPrintArea {
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
-            width: 800px; /* عرض ثابت برای جلوگیری از به هم ریختگی */
-            background-color: white;
-            color: black;
-            padding: 40px;
-            box-sizing: border-box;
-            z-index: -9999;
-            direction: rtl;
         }
     </style>
 </head>
@@ -251,9 +237,6 @@
         </main>
     </div>
 
-    <!-- این دیو برای ساخت PDF استفاده می‌شود و کاملا از صفحه مانیتور خارج است تا سفیدی ایجاد نکند -->
-    <div id="pdfPrintArea"></div>
-
     <textarea id="copyHelper" class="hidden absolute -left-full -top-full"></textarea>
 
     <script>
@@ -364,8 +347,8 @@
         let loadingInterval;
         generateBtn.addEventListener('click', handleGeneration);
         copyBtn.addEventListener('click', copyOutputToClipboard);
-        wordBtn.addEventListener('click', () => exportToFile('word'));
-        pdfBtn.addEventListener('click', () => exportToFile('pdf'));
+        wordBtn.addEventListener('click', exportToWord);
+        pdfBtn.addEventListener('click', exportToPDF);
         posterBtn.addEventListener('click', generatePosters);
 
         async function handleGeneration() {
@@ -418,7 +401,7 @@
             const schema = {
                 type: "OBJECT", properties: {
                     "impactfulTitle": { "type": "STRING" },
-                    "khutbah1": { "type": "OBJECT", "properties": { "title": { "type": "STRING" }, "bestQuote": { "type": "STRING" }, "summary": { "type": "ARRAY", "items": { "type": "OBJECT", "properties": { "heading": { "type": "STRING" }, "explanation": { "type": "STRING" } }, "required": ["heading", "explanation"] } } }, "required": ["title", "summary", "bestQuote"] },
+                    "khutbah1": { "type": "OBJECT", "properties": { "title": { "type": "STRING" }, "bestQuote": { "type": "STRING" }, "summary": { "type": "ARRAY", "items": { "type": "OBJECT", "properties": { "heading": { "type": "STRING" }, "explanation": { "type": "STRING" } }, "required":["heading", "explanation"] } } }, "required": ["title", "summary", "bestQuote"] },
                     "khutbah2": { "type": "OBJECT", "properties": { "title": { "type": "STRING" }, "bestQuote": { "type": "STRING" }, "summary": { "type": "ARRAY", "items": { "type": "OBJECT", "properties": { "heading": { "type": "STRING" }, "explanation": { "type": "STRING" } }, "required": ["heading", "explanation"] } } }, "required":["title", "summary", "bestQuote"] },
                     "overallSummary": { "type": "OBJECT", "properties": { "title": { "type": "STRING" }, "text": { "type": "STRING" } }, "required": ["title", "text"] }
                 }, "required":["impactfulTitle", "khutbah1", "khutbah2", "overallSummary"]
@@ -522,92 +505,98 @@
             }, 100);
         }
 
-        function getReportHTML() {
-            // نکته مهم رفع باگ Word و PDF: 
-            // خاصیت text-align: justify به طور کامل حذف و به right تغییر یافت تا فاصله عجیبی بین کلمات نیفتد.
-            // همچنین دستور page-break اضافه شد تا در صورت طولانی شدن PDF، متون از وسط نصف نشوند.
+        // ---------- تابع ویژه خروجی ورد کاملاً اصلاح شده ---------- //
+        function exportToWord() {
+            if (!currentReportData) return;
+            
             let html = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head>
                 <meta charset='utf-8'>
                 <title>گزارش خطبه</title>
-                <style>
-                    body { font-family: 'B Nazanin', Tahoma, Arial, sans-serif; font-size: 14pt; direction: rtl; text-align: right; background: white; color: black; padding: 20px;}
-                    p { margin: 0 0 10pt 0; line-height: 1.8; text-align: right; direction: rtl; }
-                    .bismillah { text-align: center; margin-bottom: 15pt; font-size: 14pt; font-weight: bold;}
-                    .main-title { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 20pt; color: #0056b3;}
-                    .intro { text-align: right; margin-bottom: 20pt; border-bottom: 1px solid #ccc; padding-bottom: 10px;}
-                    .section-title { font-weight: bold; margin-top: 20pt; font-size: 15pt; color: #28a745; background: #f8f9fa; padding: 5px; border-right: 4px solid #28a745; page-break-after: avoid;}
-                    .list-item { margin-bottom: 10pt; text-align: right; padding-right: 15px; page-break-inside: avoid; direction: rtl;}
-                    .overall { background: #fff3cd; padding: 10px; border-right: 4px solid #ffc107; margin-top: 20px; text-align: right; page-break-inside: avoid;}
-                </style>
             </head>
-            <body>
-                <p class="bismillah">بِسْمِ اللهِ الرَّحْمنِ الرَّحِیم</p>
-                <p class="main-title">«${currentReportData.impactfulTitle}»</p>
-                <p class="intro">${introText}</p>
-                <p class="section-title">🔸 خطبه اول: ${currentReportData.khutbah1.title}</p>
+            <body style="font-family: 'B Nazanin', Tahoma, Arial, sans-serif; font-size: 14pt; direction: rtl; text-align: right; background-color: white; color: black; padding: 20px;">
+                <p style="text-align: center; font-weight: bold; margin-bottom: 15pt;">بِسْمِ اللهِ الرَّحْمنِ الرَّحِیم</p>
+                <p style="font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 20pt; color: #0056b3;">«${currentReportData.impactfulTitle}»</p>
+                <p style="text-align: right; margin-bottom: 20pt; border-bottom: 1px solid #ccc; padding-bottom: 10px; line-height: 1.8;">${introText}</p>
+                <p style="font-weight: bold; margin-top: 20pt; font-size: 15pt; color: #28a745; background-color: #f8f9fa; padding: 5px;">🔸 خطبه اول: ${currentReportData.khutbah1.title}</p>
             `;
 
+            // حذف کامل کلاس‌ها و افزودن direction: rtl و text-align: right برای جلوگیری از به هم ریختگی فاصله کلمات
             currentReportData.khutbah1.summary.forEach((item, index) => {
-                html += `<div class="list-item"><p><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</p></div>`;
+                html += `<p style="margin-bottom: 10pt; text-align: right; direction: rtl; line-height: 1.8;"><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</p>`;
             });
 
-            html += `<p class="section-title">🔹 خطبه دوم: ${currentReportData.khutbah2.title}</p>`;
+            html += `<p style="font-weight: bold; margin-top: 20pt; font-size: 15pt; color: #28a745; background-color: #f8f9fa; padding: 5px;">🔹 خطبه دوم: ${currentReportData.khutbah2.title}</p>`;
 
             currentReportData.khutbah2.summary.forEach((item, index) => {
-                html += `<div class="list-item"><p><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</p></div>`;
+                html += `<p style="margin-bottom: 10pt; text-align: right; direction: rtl; line-height: 1.8;"><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</p>`;
             });
 
             html += `
-                <div class="overall">
+                <div style="background-color: #fff3cd; padding: 10px; margin-top: 20px; text-align: right; direction: rtl;">
                     <p style="font-weight: bold; color: #856404; font-size: 14pt; text-align:right;">📌 ${currentReportData.overallSummary.title}</p>
-                    <p style="text-align: right;">${currentReportData.overallSummary.text}</p>
+                    <p style="text-align: right; line-height: 1.8;">${currentReportData.overallSummary.text}</p>
                 </div>
             </body>
             </html>`;
-            return toPersianDigits(html);
+
+            const blob = new Blob(['\ufeff', toPersianDigits(html)], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'گزارش_خطبه.doc';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
-        function exportToFile(type) {
+        // ---------- تابع ویژه خروجی PDF بدون چشمک زدن و با عرض ثابت ---------- //
+        function exportToPDF() {
             if (!currentReportData) return;
-            
-            const rawHTML = getReportHTML();
 
-            if (type === 'word') {
-                const blob = new Blob(['\ufeff', rawHTML], { type: 'application/msword' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'گزارش_خطبه.doc';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            } 
-            else if (type === 'pdf') {
-                // ریختن محتوا در دیو مخفی (دیو در موقعیت -9999px است پس صفحه سفید نمیشود)
-                const pdfArea = document.getElementById('pdfPrintArea');
-                pdfArea.innerHTML = rawHTML;
+            const pdfBtnText = document.getElementById('pdfBtnText');
+            const originalText = pdfBtnText.innerText;
+            pdfBtnText.innerText = 'در حال ساخت...';
 
-                const opt = {
-                    margin:[10, 10, 10, 10], // حاشیه‌ها برای جلوگیری از برش متن
-                    filename:     'گزارش_خطبه.pdf',
-                    image:        { type: 'jpeg', quality: 1 },
-                    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, windowWidth: 800 },
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // جلوگیری از نصف شدن پاراگراف‌ها در دو صفحه
-                };
+            // ساخت یک رشته HTML مستقل با عرض ثابت ۸۰۰ پیکسل برای PDF
+            const pdfContent = `
+                <div style="width: 800px; padding: 40px; box-sizing: border-box; font-family: Tahoma, Arial, sans-serif; font-size: 15px; direction: rtl; text-align: right; background-color: #ffffff; color: #000000; line-height: 1.8;">
+                    <div style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px;">بِسْمِ اللهِ الرَّحْمنِ الرَّحِیم</div>
+                    <div style="text-align: center; font-size: 22px; font-weight: bold; color: #0056b3; margin-bottom: 30px;">«${currentReportData.impactfulTitle}»</div>
+                    <div style="text-align: right; margin-bottom: 30px; border-bottom: 2px solid #eeeeee; padding-bottom: 15px;">${introText}</div>
+                    
+                    <div style="font-size: 20px; font-weight: bold; color: #28a745; background-color: #f8f9fa; padding: 10px; border-right: 5px solid #28a745; margin-bottom: 20px; page-break-after: avoid;">🔸 خطبه اول: ${currentReportData.khutbah1.title}</div>
+                    ${currentReportData.khutbah1.summary.map((item, index) => `
+                        <div style="margin-bottom: 15px; text-align: right; page-break-inside: avoid;"><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</div>
+                    `).join('')}
 
-                const pdfBtnText = document.getElementById('pdfBtnText');
-                const originalText = pdfBtnText.innerText;
-                pdfBtnText.innerText = 'در حال ساخت...';
+                    <div style="font-size: 20px; font-weight: bold; color: #28a745; background-color: #f8f9fa; padding: 10px; border-right: 5px solid #28a745; margin-top: 30px; margin-bottom: 20px; page-break-after: avoid;">🔹 خطبه دوم: ${currentReportData.khutbah2.title}</div>
+                    ${currentReportData.khutbah2.summary.map((item, index) => `
+                        <div style="margin-bottom: 15px; text-align: right; page-break-inside: avoid;"><b>${index + 1}. ${item.heading}</b><br>${item.explanation}</div>
+                    `).join('')}
 
-                html2pdf().set(opt).from(pdfArea).save().then(() => {
-                    pdfBtnText.innerText = originalText;
-                    pdfArea.innerHTML = ''; // پاک کردن محتوا پس از اتمام
-                });
-            }
+                    <div style="background-color: #fff3cd; padding: 15px; border-right: 5px solid #ffc107; margin-top: 30px; page-break-inside: avoid;">
+                        <div style="font-size: 18px; font-weight: bold; color: #856404; margin-bottom: 10px;">📌 ${currentReportData.overallSummary.title}</div>
+                        <div style="text-align: right;">${currentReportData.overallSummary.text}</div>
+                    </div>
+                </div>
+            `;
+
+            // پاس دادن مستقیم رشته HTML به کتابخانه (هیچ تغییری در صفحه اصلی سایت رخ نمی‌دهد)
+            const opt = {
+                margin:       10, // حاشیه
+                filename:     'گزارش_خطبه.pdf',
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode:['avoid-all', 'css', 'legacy'] }
+            };
+
+            html2pdf().set(opt).from(toPersianDigits(pdfContent)).save().then(() => {
+                pdfBtnText.innerText = originalText;
+            });
         }
         
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
